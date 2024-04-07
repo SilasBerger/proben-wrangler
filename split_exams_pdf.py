@@ -41,15 +41,17 @@ def read_pdf_info(spreadsheet_path: Path, tab_idx: int):
     for index, line in enumerate(metadata):
         seite, name, vorname = line
         if index < len(metadata) - 1:
-            end_page = int(metadata[index + 1][0])
+            next_row = metadata[index + 1]
+            next_seite = next_row[0]
+            end_before_page = int(next_seite)
         else:
-            end_page = None
+            end_before_page = None
 
         pdf_info.append({
             "first_name": vorname,
             "last_name": name,
             "start_page": int(seite),
-            "end_page": end_page
+            "end_before_page": end_before_page
         })
 
     return pdf_info
@@ -62,12 +64,12 @@ def export_pdfs(exams_pdf_path: Path, pdf_info):
     out_dir_path.mkdir()
 
     infile = PdfReader(exams_pdf_path)
-    last_page = len(infile.pages)
+    end_of_file = len(infile.pages) + 1
 
     for student in pdf_info:
         output = PdfWriter()
-        end_page = student["end_page"] if student["end_page"] is not None else last_page
-        for page in range(student["start_page"], end_page):
+        end_before_page = student["end_before_page"] if student["end_before_page"] is not None else end_of_file
+        for page in range(student["start_page"], end_before_page):
             output.add_page(infile.pages[page - 1])
 
         out_file_path = out_dir_path / f"{student['first_name']}_{student['last_name']}.pdf"
